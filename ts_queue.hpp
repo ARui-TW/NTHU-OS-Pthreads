@@ -82,12 +82,12 @@ template <class T>
 void TSQueue<T>::enqueue(T item) {
 	// TODO: enqueues an element to the end of the queue
 	pthread_mutex_lock(&mutex);
-	printf("Enqueue get lock, %d\n", size);
+	// printf("Enqueue get lock, %d\n", size);
 
 	// 	Want to work but can't -> wait dequeue to signal me
 	while (size >= buffer_size) {
 		printf("Enqueue release lock and sleep, %d\n", size);
-		pthread_cond_wait(&cond_enqueue, &mutex);
+		// pthread_cond_wait(&cond_enqueue, &mutex);
 	}
 
 
@@ -98,11 +98,11 @@ void TSQueue<T>::enqueue(T item) {
 
 	// Have work for dequeue to do -> wake dequeue up
 	if (size > 0) {
-		printf("Wake dequeue up.\n");
+		// printf("Wake dequeue up.\n");
 		pthread_cond_signal(&cond_dequeue);
 	}
 
-	printf("Enqueue release lock, %d\n", size);
+	// printf("Enqueue release lock, %d\n", size);
 	pthread_mutex_unlock(&mutex);
 }
 
@@ -112,11 +112,11 @@ template <class T>
 T TSQueue<T>::dequeue() {
 	// TODO: dequeues the first element of the queue
 	pthread_mutex_lock(&mutex);
-	printf("Dequeue get lock, %d\n", size);
+	// printf("Dequeue get lock, %d\n", size);
 
 	// want to dequeue but nothing to dequeue -> wait until I have work to do
 	while (size <= 0) {
-		printf("Dequeue release lock and sleep, %d\n", size);
+		// printf("Dequeue release lock and sleep, %d\n", size);
 		pthread_cond_wait(&cond_dequeue, &mutex);
 	}
 
@@ -129,11 +129,11 @@ T TSQueue<T>::dequeue() {
 	
 	// Have job for enqueue to do -> wake it up
 	if (size < buffer_size) {
-		printf("Wake enqueue up.\n");
+		// printf("Wake enqueue up.\n");
 		pthread_cond_signal(&cond_enqueue);
 	}
 
-	printf("Dequeue release lock, %d\n", size);
+	// printf("Dequeue release lock, %d\n", size);
 	pthread_mutex_unlock(&mutex);
 	
 	return result;
