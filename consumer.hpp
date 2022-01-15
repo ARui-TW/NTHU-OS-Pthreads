@@ -45,7 +45,8 @@ void Consumer::start() {
 
 int Consumer::cancel() {
 	// TODO: cancels the consumer thread
-	pthread_cancel(t);
+	// FIXME: pretty sure this is the wrong way.
+	return pthread_cancel(t);
 }
 
 void* Consumer::process(void* arg) {

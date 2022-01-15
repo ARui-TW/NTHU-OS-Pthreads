@@ -22,6 +22,51 @@ int main(int argc, char** argv) {
 	std::string output_file_name(argv[3]);
 
 	// TODO: implements main function
+	TSQueue<Item*>* inputQueue;
+	TSQueue<Item*>* writerQueue;
+	TSQueue<Item*>* workerQueue;
+
+	inputQueue = new TSQueue<Item*>(READER_QUEUE_SIZE);
+	writerQueue = new TSQueue<Item*>(WRITER_QUEUE_SIZE);
+	workerQueue = new TSQueue<Item*>(WORKER_QUEUE_SIZE);
+
+	Transformer* transformer = new Transformer;
+
+	Reader* reader = new Reader(n, input_file_name, inputQueue);
+	Writer* writer = new Writer(n, output_file_name, writerQueue);
+
+	Producer* p1 = new Producer(inputQueue, workerQueue, transformer);
+	Producer* p2 = new Producer(inputQueue, workerQueue, transformer);
+	Producer* p3 = new Producer(inputQueue, workerQueue, transformer);
+	Producer* p4 = new Producer(inputQueue, workerQueue, transformer);
+
+	ConsumerController* cc = new ConsumerController(workerQueue, writerQueue, transformer,
+		CONSUMER_CONTROLLER_CHECK_PERIOD,
+		WORKER_QUEUE_SIZE * CONSUMER_CONTROLLER_LOW_THRESHOLD_PERCENTAGE / 100,
+		WORKER_QUEUE_SIZE * CONSUMER_CONTROLLER_HIGH_THRESHOLD_PERCENTAGE / 100);
+
+	reader->start();
+	writer->start();
+
+	p1->start();
+	p2->start();
+	p3->start();
+	p4->start();
+
+	cc->start();
+
+	reader->join();
+	writer->join();
+
+	delete writer;
+	delete reader;
+	delete p1;
+	delete p2;
+	delete p3;
+	delete p4;
+	delete cc;
+	delete transformer;
+
 
 	return 0;
 }

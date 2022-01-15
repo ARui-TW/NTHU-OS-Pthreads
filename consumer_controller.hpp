@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <vector>
 #include <iostream>
+#include <chrono>
 #include "consumer.hpp"
 #include "ts_queue.hpp"
 #include "item.hpp"
@@ -68,10 +69,44 @@ ConsumerController::~ConsumerController() {}
 
 void ConsumerController::start() {
 	// TODO: starts a ConsumerController thread
+	pthread_create(&t, 0, ConsumerController::process, (void*)this);
 }
 
 void* ConsumerController::process(void* arg) {
 	// TODO: implements the ConsumerController's work
+	auto timeStamp = std::chrono::high_resolution_clock::now();
+	ConsumerController* cc = (ConsumerController*)arg;
+	while (1)
+	{
+		auto now = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<double, std::micro> diff = now - timeStamp;
+		// printf("i: %d\n", i);
+
+		if (diff.count() > cc->check_period)
+		{
+			// check
+			printf("wq: %d\n", cc->worker_queue->get_size());
+
+			if (cc->worker_queue->get_size() > cc->high_threshold)
+			{
+				// create new consumer thread
+				// printf("wq: %d\n", cc->worker_queue->get_size());
+				printf("Scaling up consumers from %d to %d.\n", cc->consumers.size(), cc->consumers.size() + 1);
+				Consumer* newConsumer = new Consumer(cc->worker_queue, cc->writer_queue, cc->transformer);
+				newConsumer->start();
+				cc->consumers.push_back(newConsumer);
+			}
+			else if (cc->worker_queue->get_size() < cc->low_threshold && cc->consumers.size() > 1)
+			{
+				// printf("wq: %d\n", cc->worker_queue->get_size());
+				printf("Scaling down consumers from %d to %d.\n", cc->consumers.size(), cc->consumers.size() - 1);
+				Consumer *poped = cc->consumers.back();
+				cc->consumers.pop_back();
+				poped->cancel();
+			}
+			timeStamp = std::chrono::high_resolution_clock::now();
+		}
+	}
 }
 
 #endif // CONSUMER_CONTROLLER_HPP
