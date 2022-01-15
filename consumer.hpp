@@ -40,14 +40,18 @@ Consumer::~Consumer() {}
 
 void Consumer::start() {
 	// TODO: starts a Consumer thread
+	pthread_create(&t, 0, Consumer::process, (void*)this);
 }
 
 int Consumer::cancel() {
 	// TODO: cancels the consumer thread
+	pthread_cancel(t);
 }
 
 void* Consumer::process(void* arg) {
 	Consumer* consumer = (Consumer*)arg;
+	Item *input, *output;
+	unsigned long long newVal;
 
 	pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, nullptr);
 
@@ -55,6 +59,12 @@ void* Consumer::process(void* arg) {
 		pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, nullptr);
 
 		// TODO: implements the Consumer's work
+		if (consumer->worker_queue->get_size() > 0) {
+			input = consumer->worker_queue->dequeue();
+			newVal = consumer->transformer->consumer_transform(input->opcode, input->val);
+			output = new Item(input->key, newVal, input->opcode);
+			consumer->output_queue->enqueue(output);
+		}
 
 		pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, nullptr);
 	}
