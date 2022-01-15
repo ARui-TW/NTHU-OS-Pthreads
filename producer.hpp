@@ -34,10 +34,28 @@ Producer::~Producer() {}
 
 void Producer::start() {
 	// TODO: starts a Producer thread
+	pthread_create(&t, 0, Producer::process, (void*)this);
 }
 
 void* Producer::process(void* arg) {
 	// TODO: implements the Producer's work
+	Producer* producer = (Producer*)arg;
+	Item *input, *output;
+	unsigned long long newVal;
+
+	// FIXME: not sure how the while loop should look like
+	// while (producer->input_queue->get_size() > 0) {
+	while(1) {
+		if (producer->input_queue->get_size() > 0) {
+			// printf("%d\n", i++);
+			input = producer->input_queue->dequeue();
+			newVal = producer->transformer->producer_transform(input->opcode, input->val);
+			output = new Item(input->key, newVal, input->opcode);
+			producer->worker_queue->enqueue(output);
+		}
+	}
+
+	return nullptr;
 }
 
 #endif // PRODUCER_HPP

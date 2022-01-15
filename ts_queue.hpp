@@ -86,10 +86,9 @@ void TSQueue<T>::enqueue(T item) {
 
 	// 	Want to work but can't -> wait dequeue to signal me
 	while (size >= buffer_size) {
-		printf("Enqueue release lock and sleep, %d\n", size);
-		// pthread_cond_wait(&cond_enqueue, &mutex);
+		// printf("Enqueue release lock and sleep, %d\n", size);
+		pthread_cond_wait(&cond_enqueue, &mutex);
 	}
-
 
 	// FIXME: not sure is the correct way to work
 	buffer[tail] = item;
@@ -105,8 +104,6 @@ void TSQueue<T>::enqueue(T item) {
 	// printf("Enqueue release lock, %d\n", size);
 	pthread_mutex_unlock(&mutex);
 }
-
-// enq:
 
 template <class T>
 T TSQueue<T>::dequeue() {
@@ -124,8 +121,6 @@ T TSQueue<T>::dequeue() {
 	T result = buffer[head];
 	head = (head + 1) % buffer_size;
 	size--;
-	// printf("head: %d\n", prevHead);
-	// printf("head: %d\n", head);
 	
 	// Have job for enqueue to do -> wake it up
 	if (size < buffer_size) {
@@ -142,6 +137,7 @@ T TSQueue<T>::dequeue() {
 template <class T>
 int TSQueue<T>::get_size() {
 	// TODO: returns the size of the queue
+	// FIXME: maybe should add a lock?
 	return size;
 }
 
